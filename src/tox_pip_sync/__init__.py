@@ -18,6 +18,8 @@ STRICT_HASHING = True
 def tox_configure(config):
     """Called after command line options are parsed and ini-file has been read."""
 
+    # TODO! This is where we should be reading settings
+
 
 @hookimpl
 def tox_runenvreport(venv, action):
