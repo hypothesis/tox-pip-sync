@@ -1,0 +1,14 @@
+{
+    "project_name": "Tox pip-sync",
+    "description": "Manage virtualenvs automatically with pip-sync",
+    "project_slug": "tox-pip-sync",
+    "pkg_name": "tox_pip_sync",
+    "options": {
+        "disable_replay": [
+            "README.md",
+            "setup.cfg",
+            "src/tox_pip_sync/__init__.py"
+        ]
+    },
+    "_template": "gh:hypothesis/h-cookiecutter-pypackage"
+}

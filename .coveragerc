@@ -1,0 +1,16 @@
+[run]
+branch = True
+parallel = True
+source =
+    tox_pip_sync
+    tests/unit
+
+[paths]
+source =
+    src/
+    */site-packages/
+
+[report]
+show_missing = True
+precision = 2
+fail_under = 100.00

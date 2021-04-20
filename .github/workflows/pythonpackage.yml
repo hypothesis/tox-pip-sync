@@ -1,0 +1,161 @@
+name: Python package
+on: [push]
+
+jobs:
+  metadata:
+    name: Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      python_versions: ${{ steps.list-python-versions.outputs.python_versions }}
+      python_headline_version: ${{ steps.list-python-versions.outputs.python_headline_version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: List Python versions
+      id: list-python-versions
+      run: |
+        pip install hdev
+        echo "::set-output name=python_versions::`hdev python_version --style json --floating`"
+        echo "::set-output name=python_headline_version::`hdev python_version --style plain --first`"
+
+  lint:
+    name: Lint
+    needs: metadata
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ needs.metadata.outputs.python_headline_version }}
+
+    - name: Check formatting
+      run: |
+        pip install black isort
+        black --check src tests bin
+        isort --quiet --check-only .
+
+    # Dependencies are checked by pylint,
+    # so this is as late as we can leave this
+    - name: Install dependencies
+      run: |
+        pip install .[tests] cookiecutter
+
+    - name: Lint with pylint
+      run: |
+        pip install pylint
+        pylint --reports=y src bin
+        pylint --reports=y --rcfile=tests/.pylintrc tests
+  test:
+    name: Tests on python ${{ matrix.python-version }}
+    needs: metadata
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(needs.metadata.outputs.python_versions) }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Show git ref
+      run: |
+        echo ${{ github.ref }}
+
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install .[tests] cookiecutter
+
+    - name: Run unit tests
+      continue-on-error: true
+      run: |
+        pip install pytest pytest-html coverage
+        coverage run -m pytest --html=unit_test_report.html --self-contained-html
+        touch unit_tests_passed
+
+    - name: Archive unit test report
+      uses: actions/upload-artifact@v1
+      with:
+        name: unit_test_report_${{ matrix.python-version }}
+        path: unit_test_report.html
+
+    - name: Check unit test report
+      run: cat unit_tests_passed
+
+    - name: Run coverage
+      continue-on-error: true
+      run: |
+        coverage combine
+        coverage html --directory coverage_report --fail-under=0
+        coverage report
+        touch coverage_passed
+    - name: Archive coverage report
+      uses: actions/upload-artifact@v1
+      with:
+        name: coverage_report_${{ matrix.python-version }}
+        path: coverage_report
+
+    - name: Check coverage report
+      run: cat coverage_passed
+
+  package:
+    name: Package
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ needs.metadata.outputs.python_headline_version }}
+
+    - name: Package
+      run: |
+        pip install twine wheel
+        BUILD=${{ github.ref }} python setup.py bdist_wheel sdist
+        twine check dist/*
+
+    - name: Archive packages
+      uses: actions/upload-artifact@v1
+      with:
+        name: dist
+        path: dist
+
+  publish:
+    name: Publish
+    needs: package
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Download built packages
+      uses: actions/download-artifact@v1
+      with:
+        name: dist
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ needs.metadata.outputs.python_headline_version }}
+
+    - name: Upload to PyPI
+      run: |
+        pip install twine
+        twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
