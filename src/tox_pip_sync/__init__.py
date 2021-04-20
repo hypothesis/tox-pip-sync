@@ -62,6 +62,7 @@ def _sync_required(venv):
     if ENABLE_HASHING:
         env_digest = VirtualEnvDigest(venv, hash_venv=STRICT_HASHING)
         if env_digest.in_sync:
+
             verbosity0("Virtual env hash unchanged... skipping pip-sync")
             return False
 

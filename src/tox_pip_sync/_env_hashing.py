@@ -68,8 +68,12 @@ class VirtualEnvDigest:
             if file_name.endswith(".pyc"):
                 continue
 
-            stats = os.stat(file_name)
-            yield f"{file_name}/{stats.st_size}/{stats.st_mtime}"
+            yield self._file_fragment(file_name)
+
+    @classmethod
+    def _file_fragment(cls, file_name):
+        stats = os.stat(file_name)
+        return f"{file_name}/{stats.st_size}/{stats.st_mtime}"
 
     def _from_dependency_strings(self, deps):
         for dep in deps:
@@ -112,4 +116,4 @@ class VirtualEnvDigest:
         for file_name in self.PROJECT_FILE_SOURCES:
             project_file = project_dir / file_name
             if project_file.exists():
-                yield project_file.read_text(encoding="utf-8")
+                yield self._file_fragment(project_file)
