@@ -75,10 +75,7 @@ class VirtualEnvDigest:
         for dep in deps:
             yield dep
 
-            if dep.startswith("-r"):
-                yield from self._from_requirements_file(dep[2:])
-
-            if dep.startswith("-c"):
+            if dep.startswith("-r") or dep.startswith("-c"):
                 yield from self._from_requirements_file(dep[2:])
 
             elif dep.startswith("-e"):
