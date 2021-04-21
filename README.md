@@ -75,6 +75,18 @@ get out of date.
  * Doing something fancy in `setup.py` to read the requirements from another
    location
 
+Options
+-------
+
+In your `pyproject.toml`:
+
+```toml
+[tool.tox.tox_pip_sync]
+# By default `tox-pip-sync` disables listing the contents of the env for speed.
+# You can turn off this behavior if you want:
+skip_listing = false
+```
+
 Hacking
 -------
 

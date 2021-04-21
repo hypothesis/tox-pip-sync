@@ -1,8 +1,19 @@
 import pluggy
 
+from tox_pip_sync._config import load_config
 from tox_pip_sync._pip_sync import clear_compiled_files, pip_sync
 
 hookimpl = pluggy.HookimplMarker("tox")
+
+
+@hookimpl
+def tox_configure(config):
+    """Load our configuration.
+
+    Called after command line options are parsed and ini-file has been read.
+    """
+
+    config.tox_pip_sync = load_config(config.setupdir)
 
 
 @hookimpl
@@ -25,6 +36,17 @@ def tox_testenv_install_deps(venv, action):
 
     # Let tox know we've handled this case
     return True
+
+
+@hookimpl
+def tox_runenvreport(venv, action):  # pylint: disable=unused-argument
+    """Get the installed packages and versions in this venv."""
+
+    if venv.envconfig.config.tox_pip_sync.get("skip_listing", True):
+        # This appears to be purely FYI, and just slows things down
+        return ["*** listing modules disabled by tox-pip-sync in pyproject.toml ***"]
+
+    return None
 
 
 @hookimpl
