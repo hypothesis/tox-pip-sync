@@ -7,7 +7,9 @@
         "disable_replay": [
             "README.md",
             "setup.cfg",
-            "src/tox_pip_sync/__init__.py"
+            "src/tox_pip_sync/__init__.py",
+            "Makefile",
+            "tox.ini"
         ]
     },
     "_template": "gh:hypothesis/h-cookiecutter-pypackage"
