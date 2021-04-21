@@ -64,7 +64,6 @@ clean:
 	@find . -type f -name "*.py[co]" -delete
 	@find . -type d -name "__pycache__" -delete
 	@rm -rf build .eggs dist *.egg-info src/*.egg-info .coverage.* .coverage .pytest_cache
-	@rm .tox/* -rf
 
 .PHONY: python
 python:
