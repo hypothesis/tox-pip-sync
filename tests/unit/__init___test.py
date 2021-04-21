@@ -1,6 +1,46 @@
-import pytest
+from unittest.mock import create_autospec, sentinel
 
-from tox_pip_sync import tox_runtest_pre, tox_testenv_create, tox_testenv_install_deps
+import pytest
+from h_matchers import Any
+from tox.config import Config
+
+from tox_pip_sync import (
+    tox_configure,
+    tox_runenvreport,
+    tox_runtest_pre,
+    tox_testenv_create,
+    tox_testenv_install_deps,
+)
+
+
+class TestToxConfigure:
+    def test_it_sets_the_config(self, load_config, config):
+        tox_configure(config)
+
+        load_config.assert_called_once_with(config.setupdir)
+        assert config.tox_pip_sync == load_config.return_value
+
+    @pytest.fixture
+    def load_config(self, patch):
+        return patch("tox_pip_sync.load_config")
+
+    @pytest.fixture
+    def config(self):
+        config = create_autospec(Config)
+        config.setupdir = sentinel.setupdir
+        return config
+
+
+class TestRunenvreport:
+    @pytest.mark.parametrize(
+        "skip_listing,expected", ((True, Any.list.of_size(at_least=1)), (False, None))
+    )
+    def test_it(self, skip_listing, expected, venv, action):
+        venv.envconfig.config.tox_pip_sync = {"skip_listing": skip_listing}
+
+        result = tox_runenvreport(venv, action)
+
+        assert result == expected
 
 
 class TestToxTestenvCreate:
