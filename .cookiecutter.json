@@ -8,7 +8,6 @@
             "README.md",
             "setup.cfg",
             "src/tox_pip_sync/__init__.py",
-            "Makefile",
             "tox.ini"
         ]
     },
