@@ -1,13 +1,33 @@
 # tox-pip-sync
 
-Manage virtualenvs automatically with pip-sync
+Manage virtualenvs automatically with `pip-sync`.
 
 Usage
 -----
 
-TODO: Use this section to explain how someone would use your package in their project.
-For example: how to add the package to a project as a requirement, how to configure the
-package, how to initialize the package, and how to call it.
+In `tox.ini` add:
+
+```ini
+[tox]
+requires =
+  tox-pip-sync
+``` 
+
+This will cause `pip-sync` from [`pip-tools`](https://pypi.org/project/pip-tools/) 
+to be used to synchronise virtual envs with the requirements specified in the
+`tox.ini` on every run. 
+
+This means never having to run `--recreate` and should be significantly faster
+than plain `tox` when re-using existing virtual envs.
+
+This will also track requirements specified like this:
+
+ * `-r requirements.txt` 
+ * `-e .`
+ 
+In fact `pip-sync` works best with pinned requirements created with `pip-compile`.
+See the [`pip-tools`](https://pypi.org/project/pip-tools/) docs for more info.
+
 
 Hacking
 -------
