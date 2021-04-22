@@ -41,6 +41,12 @@ def tox_testenv_install_deps(venv, action):
 def tox_runtest_pre(venv):
     """Perform arbitrary action after running tests for this venv."""
 
+    # Note: None of this gets called for `.tox/.tox`, so we are using default
+    # behavior for the venv tox installs itself into. On the other side, you
+    # can't specify anything using versions, referring to files etc. for the
+    # direct tox dependencies anyway: they are always plain unpinned
+    # dependencies.
+
     if not getattr(venv, "pip_synced", False):
         # `tox_testenv_install_deps` does not get called every time we run tox
         # so assuming we've not run before, we should make sure we have

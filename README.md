@@ -11,23 +11,69 @@ In `tox.ini` add:
 [tox]
 requires =
   tox-pip-sync
-``` 
 
-This will cause `pip-sync` from [`pip-tools`](https://pypi.org/project/pip-tools/) 
+deps =
+    tests: -r pinned-requirements.txt
+    tests: -e .
+    tests: ad-hoc-requirement
+```
+
+This will cause `pip-sync` from [`pip-tools`](https://pypi.org/project/pip-tools/)
 to be used to synchronise virtual envs with the requirements specified in the
-`tox.ini` on every run. 
+`tox.ini` on every run.
 
 This means never having to run `--recreate` and should be significantly faster
 than plain `tox` when re-using existing virtual envs.
 
-This will also track requirements specified like this:
+### How `tox-pip-sync` handles dependencies
 
- * `-r requirements.txt` 
+`tox-pip-sync` expects any requirements to be either:
+
+ * Specified directly in the `tox.ini`
+ * Stored in a **pinned** requirements file referenced from `tox.ini` with `-r` _(best!)_
+
+Pinned dependencies are the best and fastest way to specify your dependencies
+and the easiest way to ensure compatibility is to use a file created by
+`pip-compile` as `-r requirements.txt`. See the
+[`pip-tools`](https://pypi.org/project/pip-tools/) docs for more info.
+
+__Warning: Using unpinned requirements in external files will cause problems!__
+
+We can also track requirements specified in the `tox.ini` file like this:
+
+ * `.[tests]`
  * `-e .`
- 
-In fact `pip-sync` works best with pinned requirements created with `pip-compile`.
-See the [`pip-tools`](https://pypi.org/project/pip-tools/) docs for more info.
+ * `ad-hoc`
+ * `ad-hoc<=5.0`
+ * `ad-hoc==5.0`
 
+For any dependency specified directly in the `tox.ini` (not using `-r`) we will:
+
+ * Create an unpinned requirements file in the virtual env directory
+ * Constrain it (using `-c`) if there are any externally referenced dependency
+   files using `-r`
+ * Compile it
+ * Use the compiled version along side those specified with `-r`
+
+For references like `-c` and `-r` we will recursively check the specified
+files for changes. For local references like `.` or `-e .[tests]` we will check
+the following files for changes:
+
+ * `pyproject.toml`
+ * `setup.cfg`
+ * `setup.py`
+
+If any changes are detected we will recompile the dependencies. This means any
+updates you make should be reflected, but if you have unpinned dependencies
+which are met in your virtual environment, they will not be updated and could
+get out of date.
+
+### Things which can break `tox-pip-sync`
+
+ * Referencing requirements files with unpinned requirements (use `pip-compile`
+   first)
+ * Doing something fancy in `setup.py` to read the requirements from another
+   location
 
 Hacking
 -------
@@ -64,7 +110,32 @@ cd tox-pip-sync
 make test
 ```
 
-**That's it!** You’ve finished setting up your tox-pip-sync
+#### Developing locally
+
+Testing and developing `tox-pip-sync` can be a bit tricky, but you can get a
+representative system to local testing with a bit of `tox` know how.
+
+`tox` handles creating the `.tox/.tox` virtual env itself, and doesn't ask us
+to get involved at all. This sounds like a problem, but it's actually pretty
+handy for us as it allows the following workflow:
+
+ * Add `tox-pip-sync` to your `tox.ini` of choice as normal (or use this project)
+ * Run any `tox` command to ensure the `.tox/.tox` env is created
+ * Install the library in editable mode `.tox/.tox/bin/pip install -e .`
+ * Run commands as normal...
+
+As we installed in editable mode, any changes should be immediately visible.
+
+Because tox is monitoring the requirements (not us) it will only recreate the
+tox env if:
+
+ * It gets deleted or you ask `tox` to recreate the envs
+ * The contents of the `requires =` section changes
+
+This means you can run commands to your hearts content and your local
+`tox-pip-sync` should never be removed.
+
+**That's it!** You’ve finished setting up your `tox-pip-sync`
 development environment. Run `make help` to see all the commands that're
 available for linting, code formatting, packaging, etc.
 

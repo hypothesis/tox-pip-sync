@@ -28,5 +28,6 @@ def venv(tmpdir):
     venv = create_autospec(venv_model, instance=True)
     venv._pcall.return_value = "Some command output"  # pylint: disable=protected-access
     venv.envconfig.envbindir = tmpdir / "bin"
+    venv.path = tmpdir
 
     return venv
