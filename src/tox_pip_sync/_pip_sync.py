@@ -1,73 +1,98 @@
 import os
-import re
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
+from glob import glob
 
-LINE_START = re.compile(r"^", re.MULTILINE)
+from tox.reporter import verbosity1
+
+from tox_pip_sync._requirements import RequirementList
 
 
 def pip_sync(venv, action):
     """Use pip-sync to ensure requirements are up to date in a virtual env."""
 
-    with _get_requirements(venv) as requirements_files:
-        # This is how tox does it internally
+    pip_tools_run(
+        "pip-sync",
+        list(requirements_files_for_env(venv, action)),
+        message="Syncing virtual env with pip-sync",
+        venv=venv,
+        action=action,
+    )
 
+
+def pip_tools_run(exe_name, arguments, message, venv, action):
+    """Run a pip-tools executable with arguments in a virtual env."""
+
+    exe_path = venv.envconfig.envbindir / exe_name
+
+    if not exe_path.exists():
+        verbosity1("Bootstrapping pip-tools")
         # pylint: disable=protected-access
-        output = venv._pcall(
-            [_pip_sync_exe(venv, action)] + requirements_files,
+        # Use `--force` to ensure `pip-tools` is in our virtual env and not
+        # being picked up via `--sitepackages`
+        venv._install(["pip-tools", "--force"], action=action)
+
+        assert exe_path.exists(), (
+            f"Expected executable '{exe_path}' was not installed "
+            "as a result of installing `pip-tools`"
+        )
+
+    action.setactivity(exe_name, message)
+    verbosity1(
+        # pylint: disable=protected-access
+        venv._pcall(
+            [exe_path] + arguments,
             cwd=venv.envconfig.config.toxinidir,
             action=action,
         )
-
-        output = LINE_START.sub("\t", output)  # Indent
-        output = f"Syncing virtual env with pip-sync:\n{output}"
-
-        action.setactivity("pip-sync", output)
+    )
 
 
-def _pip_sync_exe(venv, action):
-    """Get the pip-sync executable in the virtual env."""
+def requirements_files_for_env(venv, action):
+    """Return requirements files for a tox virtual env.
 
-    pip_sync_exe = venv.envconfig.envbindir / "pip-sync"
+    This will read, create or invent them as necessary to provide files for
+    `pip-sync` to work with.
+    """
 
-    if not pip_sync_exe.exists():
-        # This should not be necessary if we were installed normally, but when
-        # we are installed via --sitepackages, the pip-tools installation will
-        # update the global python env, not the virtual env we want
+    requirements = RequirementList.from_strings(
+        (dep.name for dep in venv.envconfig.deps)
+    )
 
-        # pylint: disable=protected-access
-        venv._install(["pip-tools", "--force"], action=action)
+    for req in requirements:
+        # Yield out any requirements like '-r filename.txt'. We'll assume they
+        # are already compiled for us
+        if req.arg_type == req.ArgType.REFERENCE:
+            yield req.filename
 
-    if not pip_sync_exe.exists():
-        raise FileNotFoundError(f"Cannot find pip-sync exe: {pip_sync_exe}")
-
-    return str(pip_sync_exe)
+    if requirements.needs_compilation:
+        yield _pinned_file_for_requirements(venv, action, requirements)
 
 
-@contextmanager
-def _get_requirements(venv):
-    """Generate requirements files for pip-sync to use."""
+def _pinned_file_for_requirements(venv, action, requirements):
+    stub = "tox-pip-sync_" + requirements.hash(root_dir=venv.envconfig.config.setupdir)
 
-    temp_dependency_file = None
-    requirements_files = []
-    plain_dependencies = []
+    pinned = venv.path / stub + ".txt"
+    if pinned.exists():
+        verbosity1(f"Using existing compiled dependencies: '{pinned}'")
+        return pinned
 
-    for dep in venv.envconfig.deps:
-        if dep.name.startswith("-r"):
-            requirements_files.append(dep.name[2:])
-        else:
-            plain_dependencies.append(dep.name)
+    # We can't find what we're looking for, so clear out any stale files
+    for old_files in glob(str(venv.path / "tox-pip-sync_*")):
+        os.remove(old_files)
 
-    if plain_dependencies:
-        with NamedTemporaryFile(
-            mode="w", delete=False, suffix=".txt", prefix="tox_ini_"
-        ) as temp_dependency_file:
-            for dep in plain_dependencies:
-                temp_dependency_file.write(dep + "\n")
+    # Create a new version and compile it
+    constrained = requirements.constrained_set()
+    unpinned = venv.path / stub + ".in"
+    unpinned.write_text("\n".join(str(dep) for dep in constrained), encoding="utf-8")
 
-        requirements_files.append(temp_dependency_file.name)
+    pip_tools_run(
+        "pip-compile",
+        [str(unpinned)],
+        message=f"Compiling dependencies '{constrained}'",
+        venv=venv,
+        action=action,
+    )
 
-    yield requirements_files
+    if not pinned.exists():
+        raise FileNotFoundError(pinned)
 
-    if temp_dependency_file:
-        os.unlink(temp_dependency_file.name)
+    return str(pinned)
