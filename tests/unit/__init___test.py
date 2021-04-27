@@ -1,24 +1,6 @@
 import pytest
 
-from tox_pip_sync import tox_runtest_pre, tox_testenv_create, tox_testenv_install_deps
-
-
-class TestToxTestenvCreate:
-    def test_it_does_nothing_for_creates(self, venv, action):
-        action.activity = "create"
-
-        result = tox_testenv_create(venv, action)
-
-        # We don't want to interfere
-        assert not result
-
-    def test_it_disables_recreates(self, venv, action):
-        action.activity = "recreate"
-
-        result = tox_testenv_create(venv, action)
-
-        # We want to take control and prevent tox default behavior
-        assert result
+from tox_pip_sync import tox_runtest_pre, tox_testenv_install_deps
 
 
 class TestToxTestenvInstallDeps:
