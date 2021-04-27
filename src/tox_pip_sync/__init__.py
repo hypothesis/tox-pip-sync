@@ -6,26 +6,6 @@ hookimpl = pluggy.HookimplMarker("tox")
 
 
 @hookimpl
-def tox_testenv_create(venv, action):  # pylint: disable=unused-argument
-    """Perform creation action for this venv."""
-
-    if action.activity == "recreate":
-        # By default tox completely destroys and recreates a virtual env when
-        # it notices changes. It is currently capable of noticing changes in
-        # deps directly listed in the tox.ini file. In version 4 it may also
-        # become "-r requirements.txt" aware too. pip-sync can however remove
-        # the dependencies that aren't needed and is equivalent to a recreate
-        # without starting completely from scratch
-
-        # Let tox know we're handling this and not to run default behavior
-        action.setactivity("pip-sync", "Skipping virtual env recreation")
-        return True
-
-    # Let tox know we _don't_ want to handle this case
-    return None
-
-
-@hookimpl
 def tox_testenv_install_deps(venv, action):
     """Perform install dependencies action for this venv."""
 
