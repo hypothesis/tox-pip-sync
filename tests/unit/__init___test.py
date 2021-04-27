@@ -1,6 +1,21 @@
 import pytest
 
-from tox_pip_sync import tox_runtest_pre, tox_testenv_install_deps
+from tox_pip_sync import tox_runtest_pre, tox_testenv_create, tox_testenv_install_deps
+
+
+class TestToxTestenvCreate:
+    def test_it_clears_old_files(self, venv, action, clear_compiled_files):
+        action.activity = "create"
+
+        result = tox_testenv_create(venv, action)
+
+        clear_compiled_files.assert_called_once_with(venv)
+        # We don't want to interfere
+        assert not result
+
+    @pytest.fixture(autouse=True)
+    def clear_compiled_files(self, patch):
+        return patch("tox_pip_sync.clear_compiled_files")
 
 
 class TestToxTestenvInstallDeps:
