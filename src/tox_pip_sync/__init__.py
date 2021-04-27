@@ -1,8 +1,18 @@
 import pluggy
 
-from tox_pip_sync._pip_sync import pip_sync
+from tox_pip_sync._pip_sync import clear_compiled_files, pip_sync
 
 hookimpl = pluggy.HookimplMarker("tox")
+
+
+@hookimpl
+def tox_testenv_create(venv, action):  # pylint: disable=unused-argument
+    """Perform creation action for this venv."""
+
+    # Ensure any files we've left about are removed if the environment is being
+    # re/created as we can't assume they wouldn't compile differently in the
+    # new env we find ourselves.
+    clear_compiled_files(venv)
 
 
 @hookimpl

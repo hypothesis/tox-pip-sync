@@ -76,8 +76,7 @@ def _pinned_file_for_requirements(venv, action, requirements):
         return pinned
 
     # We can't find what we're looking for, so clear out any stale files
-    for old_files in glob(str(venv.path / "tox-pip-sync_*")):
-        os.remove(old_files)
+    clear_compiled_files(venv)
 
     # Create a new version and compile it
     constrained = requirements.constrained_set()
@@ -96,3 +95,11 @@ def _pinned_file_for_requirements(venv, action, requirements):
         raise FileNotFoundError(pinned)
 
     return str(pinned)
+
+
+def clear_compiled_files(venv):
+    """Remove any files created by `tox-pip-sync`."""
+
+    # We can't find what we're looking for, so clear out any stale files
+    for old_files in glob(str(venv.path / "tox-pip-sync_*")):
+        os.remove(old_files)
