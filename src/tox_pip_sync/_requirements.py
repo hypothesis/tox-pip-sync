@@ -36,15 +36,23 @@ class RequirementList(list):
         # anything which is has been run through `pip-compile` by the user
         return any(not req.filename for req in self)
 
-    def constrained_set(self):
+    def constrained_set(self, relative_root):
         """Convert all -r requirements to constraints instead."""
 
         requirements = RequirementList()
 
         for req in self:
-            if req.arg_type == PipRequirement.ArgType.REFERENCE:
+            if req.filename:
                 req = deepcopy(req)
-                req.arg_type = PipRequirement.ArgType.CONSTRAINT
+
+                # When pip-compile finds a reference like -c it assumes it's
+                # relative to the current path, so we need to offset back
+                # to the root. Oddly it doesn't do this for -e, that is
+                # relative to the current working directory.
+                req.filename = relative_root.joinpath(req.filename)
+
+                if req.arg_type == PipRequirement.ArgType.REFERENCE:
+                    req.arg_type = PipRequirement.ArgType.CONSTRAINT
 
             requirements.append(req)
 
@@ -140,7 +148,7 @@ class PipRequirement:
             result = self.arg_type.value + " "
 
             if self.filename:
-                return result + self.filename
+                return result + str(self.filename)
 
         return result + self.requirement
 
@@ -154,7 +162,7 @@ class PipRequirement:
         return hash(self._key())
 
     def _key(self):
-        return self.arg_type, self.requirement, self.filename
+        return self.arg_type, self.requirement, str(self.filename)
 
     def __repr__(self):
         return f"PipRequirement('{self.__str__()}')"
