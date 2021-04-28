@@ -61,7 +61,11 @@ class TestRequirementsFilesForEnv:
         RequirementList.from_strings.assert_called_once_with(
             Any.generator.containing(["-creqs.txt", ".[tests]"]).only()
         )
-        requirements_set.constrained_set.assert_called_once_with()
+        requirements_set.constrained_set.assert_called_once_with(
+            # This path is the difference between the venv dir and the project
+            # root
+            Path("../../")
+        )
         unpinned = venv.path / "tox-pip-sync_0000.in"
         assert unpinned.read() == "some_output\n0"
 
@@ -168,11 +172,8 @@ class TestPipToolsRun:
         return request.param
 
     @pytest.fixture(autouse=True)
-    def bin_dir(self, tmpdir):
-        bin_dir = tmpdir / "bin"
-        bin_dir.mkdir()
-
-        return bin_dir
+    def bin_dir(self, venv):
+        return venv.envconfig.envbindir
 
 
 class TestPipSync:

@@ -1,5 +1,7 @@
 import os
 from glob import glob
+from os.path import relpath
+from pathlib import Path
 
 from tox.reporter import verbosity1
 
@@ -79,7 +81,8 @@ def _pinned_file_for_requirements(venv, action, requirements):
     clear_compiled_files(venv)
 
     # Create a new version and compile it
-    constrained = requirements.constrained_set()
+    relative_root = Path(relpath(venv.envconfig.config.setupdir, venv.path))
+    constrained = requirements.constrained_set(relative_root)
     unpinned = venv.path / stub + ".in"
     unpinned.write_text("\n".join(str(dep) for dep in constrained), encoding="utf-8")
 

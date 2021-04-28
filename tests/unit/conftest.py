@@ -27,7 +27,15 @@ def venv(tmpdir):
     # things onto this as it runs in tox
     venv = create_autospec(venv_model, instance=True)
     venv._pcall.return_value = "Some command output"  # pylint: disable=protected-access
-    venv.envconfig.envbindir = tmpdir / "bin"
-    venv.path = tmpdir
+
+    venv.path = tmpdir / ".tox"
+    venv.path.mkdir()
+    venv.path = venv.path / "venv"
+    venv.path.mkdir()
+
+    venv.envconfig.envbindir = venv.path / "bin"
+    venv.envconfig.envbindir.mkdir()
+
+    venv.envconfig.config.setupdir = tmpdir
 
     return venv

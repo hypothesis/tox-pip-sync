@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from h_matchers import Any
 
@@ -62,12 +64,13 @@ class TestRequirementsList:
         req_set = RequirementList.from_strings(
             ["-r requirements.txt", "-c constrained.txt", "-e editable", "package"]
         )
+        rel_root = Path("../..")
 
-        assert req_set.constrained_set() == RequirementList.from_strings(
+        assert req_set.constrained_set(rel_root) == RequirementList.from_strings(
             [
-                "-c requirements.txt",  # <<< The change is the -c here
-                "-c constrained.txt",
-                "-e editable",
+                "-c ../../requirements.txt",  # <<< The change is the -c here
+                "-c ../../constrained.txt",
+                "-e editable",  # <<< Note this isn't relative to rel_root
                 "package",
             ]
         )
