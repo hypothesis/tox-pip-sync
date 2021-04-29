@@ -44,7 +44,7 @@ def tox_runenvreport(venv, action):  # pylint: disable=unused-argument
 
     if venv.envconfig.config.tox_pip_sync.get("skip_listing", True):
         # This appears to be purely FYI, and just slows things down
-        return ["*** listing modules disabled by tox-pip-sync in pyproject.toml ***"]
+        return ["*** listing modules disabled by tox-pip-sync ***"]
 
     return None
 

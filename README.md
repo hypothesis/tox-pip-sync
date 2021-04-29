@@ -12,6 +12,7 @@ In `tox.ini` add:
 requires =
   tox-pip-sync
 
+[testenv]
 deps =
     tests: -r pinned-requirements.txt
     tests: -e .
@@ -86,6 +87,16 @@ In your `pyproject.toml`:
 # You can turn off this behavior if you want:
 skip_listing = false
 ```
+
+... or in your `tox.ini`:
+
+```ini
+[tox_pip_sync]
+skip_listing = false
+```
+
+If a value appears in both files, the `pyproject.toml` value will take
+precedence.
 
 Hacking
 -------
