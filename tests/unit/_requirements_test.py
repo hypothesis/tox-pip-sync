@@ -100,7 +100,9 @@ class TestRequirementsSetHashing:
 
         assert get_hash()
 
-    @pytest.mark.parametrize("file_name", ("requirements.txt", "child-reqs.txt"))
+    @pytest.mark.parametrize(
+        "file_name", ("requirements.txt", "child-reqs.txt", "absolute-reqs.txt")
+    )
     def test_it_detects_changes_to_requirements_files(
         self, get_hash, project_dir, file_name
     ):
@@ -130,7 +132,8 @@ class TestRequirementsSetHashing:
 
     @pytest.fixture
     def project_reqs(self, project_dir):  # pylint: disable=unused-argument
-        return ["-r child-reqs.txt", ".", "package_3==2.2.2"]
+        abs_reqs = project_dir / "absolute-reqs.txt"
+        return ["-r child-reqs.txt", f"-r {abs_reqs}", ".", "package_3==2.2.2"]
 
     @pytest.fixture
     def project_dir(self, tmpdir):
@@ -143,6 +146,9 @@ class TestRequirementsSetHashing:
 
         reqs = tmpdir / "child-reqs.txt"
         reqs.write_text("-r requirements.txt\npackage_2=2.2.2", encoding="utf-8")
+
+        reqs = tmpdir / "absolute-reqs.txt"
+        reqs.write_text("package==3.3.4", encoding="utf-8")
 
         return tmpdir
 
