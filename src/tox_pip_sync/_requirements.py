@@ -83,9 +83,14 @@ class RequirementList(list):
                 # pylint: disable=protected-access
                 # This is an instance of this class, making this fine...
 
-                yield from self.from_requirements_file(
-                    root_dir / req.filename
-                )._hash_fragments(root_dir)
+                filename = req.filename
+                # If this is a relative path, make it relative to the root
+                if not filename.startswith("/"):
+                    filename = root_dir / req.filename
+
+                yield from self.from_requirements_file(filename)._hash_fragments(
+                    root_dir
+                )
 
             if req.is_local:
                 yield from self._hash_fragments_for_project(root_dir)
