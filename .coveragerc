@@ -3,7 +3,7 @@ branch = True
 parallel = True
 source =
     tox_pip_sync
-    tests/unit
+    tests
 
 [paths]
 source =
@@ -12,5 +12,10 @@ source =
 
 [report]
 show_missing = True
+skip_covered = True
 precision = 2
 fail_under = 100.00
+
+# Avoid coverage getting confused by config files
+omit =
+   tests/.py*
