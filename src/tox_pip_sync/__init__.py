@@ -31,7 +31,8 @@ def tox_testenv_install_deps(venv, action):
     """Perform install dependencies action for this venv."""
 
     # Call our pip sync method instead of the usual way to install dependencies
-    pip_sync(venv, action)
+    config = venv.envconfig.config.tox_pip_sync
+    pip_sync(venv, action, skip_on_hash_match=config.get("enable_hashing", True))
     venv.pip_synced = True
 
     # Let tox know we've handled this case
@@ -42,9 +43,10 @@ def tox_testenv_install_deps(venv, action):
 def tox_runenvreport(venv, action):  # pylint: disable=unused-argument
     """Get the installed packages and versions in this venv."""
 
-    if venv.envconfig.config.tox_pip_sync.get("skip_listing", True):
+    config = venv.envconfig.config.tox_pip_sync
+    if config.get("skip_listing", True):
         # This appears to be purely FYI, and just slows things down
-        return ["*** listing modules disabled by tox-pip-sync ***"]
+        return ["*** listing modules disabled by tox-pip-sync in pyproject.toml ***"]
 
     return None
 

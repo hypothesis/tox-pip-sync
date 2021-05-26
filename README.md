@@ -86,6 +86,12 @@ In your `pyproject.toml`:
 # By default `tox-pip-sync` disables listing the contents of the env for speed.
 # You can turn off this behavior if you want:
 skip_listing = false
+
+# Once we succesfully install the dependencies for a virtual env, we will store
+# a hash of them. If nothing changes we won't attempt to resync the virtual
+# environment, which can save several seconds. You disable this so the
+# environment is synced every time by setting this to `false`
+enable_hashing = true
 ```
 
 ... or in your `tox.ini`:
@@ -93,6 +99,7 @@ skip_listing = false
 ```ini
 [tox_pip_sync]
 skip_listing = false
+enable_hashing = true
 ```
 
 If a value appears in both files, the `pyproject.toml` value will take

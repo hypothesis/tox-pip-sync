@@ -60,9 +60,13 @@ class TestToxTestenvCreate:
 
 class TestToxTestenvInstallDeps:
     def test_it(self, venv, action, pip_sync):
+        venv.envconfig.config.tox_pip_sync = {"enable_hashing": sentinel.enable_hashing}
+
         result = tox_testenv_install_deps(venv, action)
 
-        pip_sync.assert_called_once_with(venv, action)
+        pip_sync.assert_called_once_with(
+            venv, action, skip_on_hash_match=sentinel.enable_hashing
+        )
 
         assert venv.pip_synced
         assert result
