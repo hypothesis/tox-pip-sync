@@ -1,5 +1,6 @@
 from copy import deepcopy
 from enum import Enum
+from functools import lru_cache
 from hashlib import md5
 
 
@@ -58,6 +59,7 @@ class RequirementList(list):
 
         return requirements
 
+    @lru_cache(1)
     def hash(self, root_dir):
         """Get a hash of this set of requirements.
 
@@ -67,7 +69,6 @@ class RequirementList(list):
             requirements includes against as `pathlib.Path` object
         :return: An hex string digest of the requirements
         """
-
         digest = md5()
         for fragment in self._hash_fragments(root_dir):
             digest.update(str(fragment).encode("utf-8"))
@@ -108,6 +109,13 @@ class RequirementList(list):
             if project_file.exists():
                 # Use the whole contents
                 yield project_file.read()
+
+    def __hash__(self):
+        # Ensure we are hashable, and also ensure that different instances of
+        # this class hash to different things, even if they have the same
+        # contents. Otherwise the `@lru_cache` above ends up being shared
+        # between all instances
+        return hash(id(self))
 
 
 class PipRequirement:
