@@ -53,4 +53,5 @@ coverage: python
 
 .PHONY: python
 python:
-	@./bin/install-python.sh
+	@# Ensure we can run even if the local pyenv versions are not installed
+	@PYENV_VERSION=system hdev install-python;
