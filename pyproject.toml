@@ -1,3 +1,7 @@
+[tool.hdev]
+project_name = "tox-pip-sync"
+project_type = "library"
+
 [tool.hdev.tox]
 # Any pip dependencies to be run before every test run (is prepended with
 # "pip install") or false if no extras are required.
