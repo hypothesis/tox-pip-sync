@@ -15,7 +15,7 @@ class RequirementList(list):
     def from_requirements_file(cls, filename):
         requirements = cls()
 
-        with open(filename) as handle:
+        with open(filename, encoding="utf-8") as handle:
             for line in handle:
                 line = line.strip()
                 if line.startswith("#") or not line:
