@@ -49,12 +49,6 @@ def pip_tools_run(exe_name, arguments, message, venv, action):
         # being picked up via `--sitepackages`
         venv._install(["pip-tools", "--force"], action=action)
 
-        # Get around the current bug with pip-tools referencing removed
-        # internals from pip:
-        # https://github.com/jazzband/pip-tools/issues/1503
-        # When this issue is resolved we can remove this
-        venv._install(["pip==21.2.4"], action=action)
-
         assert exe_path.exists(), (
             f"Expected executable '{exe_path}' was not installed "
             "as a result of installing `pip-tools`"
