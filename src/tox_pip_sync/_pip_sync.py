@@ -49,6 +49,10 @@ def pip_tools_run(exe_name, arguments, message, venv, action):
         # being picked up via `--sitepackages`
         venv._install(["pip-tools", "--force"], action=action)
 
+        # Work around a bug in `pip-tools`:
+        # https://github.com/jazzband/pip-tools/issues/1558
+        venv._install(["pip<22", "--force"], action=action)
+
         assert exe_path.exists(), (
             f"Expected executable '{exe_path}' was not installed "
             "as a result of installing `pip-tools`"
