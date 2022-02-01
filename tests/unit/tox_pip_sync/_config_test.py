@@ -30,12 +30,12 @@ class TestLoadConfig:
 
         settings = load_config(tmpdir)
 
-        assert settings == {}
+        assert not settings
 
     def test_it_can_handle_the_files_being_missing(self, tmpdir):
         settings = load_config(tmpdir)
 
-        assert settings == {}
+        assert not settings
 
     @pytest.mark.parametrize(
         "option,value,expected",
