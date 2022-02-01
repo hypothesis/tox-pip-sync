@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from unittest.mock import sentinel
+from unittest.mock import call, sentinel
 
 import pytest
 from h_matchers import Any
@@ -170,7 +170,12 @@ class TestPipToolsRun:
 
         pip_tools_run(exe_name, ["args"], message="any", venv=venv, action=action)
 
-        venv._install.assert_called_once_with(["pip-tools", "--force"], action=action)
+        venv._install.assert_has_calls(
+            [
+                call(["pip-tools", "--force"], action=action),
+                call(["pip<22", "--force"], action=action),
+            ]
+        )
 
     def test_if_installing_pip_fails_we_raise(self, exe_name, venv, action):
         with pytest.raises(AssertionError):
