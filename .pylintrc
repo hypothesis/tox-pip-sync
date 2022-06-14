@@ -11,8 +11,7 @@ load-plugins=pylint.extensions.bad_builtin,
              pylint.extensions.redefined_variable_type,
 
 [MESSAGES CONTROL]
-disable=bad-continuation,
-        missing-docstring,
+disable=missing-docstring,
         missing-type-doc,
         missing-return-type-doc,
         wrong-import-order,
